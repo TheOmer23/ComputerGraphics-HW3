@@ -9,8 +9,8 @@ def normalize(vector):
 # This function gets a vector and the normal of the surface it hit
 # This function returns the vector that reflects from the surface
 def reflected(vector, axis):
-    # TODO:
     v = np.array([0,0,0])
+    v = vector - 2 * (np.dot(vector, axis) * axis)
     return v
 
 ## Lights
@@ -25,12 +25,12 @@ class DirectionalLight(LightSource):
 
     def __init__(self, intensity, direction):
         super().__init__(intensity)
-        # TODO
+        self.direction = direction
 
-    # This function returns the ray that goes from the light source to a point
+    # This function returns the ray that goes from a point to the light source
     def get_light_ray(self,intersection_point):
-        # TODO
-        return Ray()
+        #we did
+        return Ray(intersection_point,-self.direction)
 
     # This function returns the distance from a point to the light source
     def get_distance_from_light(self, intersection):
@@ -70,7 +70,7 @@ class SpotLight(LightSource):
         super().__init__(intensity)
         # TODO
 
-    # This function returns the ray that goes from the light source to a point
+    # This function returns the ray that goes from a point to the light source
     def get_light_ray(self, intersection):
         #TODO
         pass
@@ -95,7 +95,16 @@ class Ray:
         intersections = None
         nearest_object = None
         min_distance = np.inf
-        #TODO
+        min_t = np.inf
+        #we did
+        for obj in objects:
+            if obj.intersect(self) != None:
+                t = obj.intersect(self)[0]
+                if t < min_t:
+                    min_t = t
+                    nearest_object = obj
+        p = self.origin + min_t * self.direction
+        min_distance = np.linalg.norm(p - self.origin)
         return nearest_object, min_distance
 
 
@@ -144,7 +153,7 @@ class Triangle(Object3D):
         pass
 
     def intersect(self, ray: Ray):
-        # TODO
+        
         pass
 
 class Pyramid(Object3D):
