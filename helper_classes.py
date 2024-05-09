@@ -30,17 +30,15 @@ class DirectionalLight(LightSource):
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self,intersection_point):
         #we did
-        return Ray(intersection_point,-self.direction)
+        return Ray(intersection_point,normalize(-self.direction))
 
     # This function returns the distance from a point to the light source
     def get_distance_from_light(self, intersection):
-        #TODO
-        pass
+        return np.inf
 
     # This function returns the light intensity at a point
     def get_intensity(self, intersection):
-        #TODO
-        pass
+        return self.intensity
 
 
 class PointLight(LightSource):
@@ -54,6 +52,7 @@ class PointLight(LightSource):
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self,intersection):
         return Ray(intersection, normalize(self.position - intersection))
+    
 
     # This function returns the distance from a point to the light source
     def get_distance_from_light(self,intersection):
@@ -68,21 +67,25 @@ class PointLight(LightSource):
 class SpotLight(LightSource):
     def __init__(self, intensity, position, direction, kc, kl, kq):
         super().__init__(intensity)
-        # TODO
+        self.position = np.array(position)
+        self.direction = normalize(np.array(direction))
+        self.kc = kc
+        self.kl = kl
+        self.kq = kq
 
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self, intersection):
-        #TODO
-        pass
+        return Ray(intersection,-self.direction)
 
     def get_distance_from_light(self, intersection):
-        #TODO
-        pass
+        return np.linalg.norm(intersection - self.position)
 
     def get_intensity(self, intersection):
-        #TODO
-        pass
-
+        dist = self.get_distance_from_light(intersection)
+        v = normalize(intersection - self.position)
+        numerator = self.intensity * (np.dot(v , self.direction))
+        denominator = self.kc + (self.kl * dist) + (self.kq * (dist**2))
+        return (numerator / denominator)
 
 class Ray:
     def __init__(self, origin, direction):
@@ -279,3 +282,4 @@ class Sphere(Object3D):
             return max(t1, t2), self
         return None
 
+ 
