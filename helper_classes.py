@@ -146,15 +146,40 @@ class Triangle(Object3D):
         self.b = np.array(b)
         self.c = np.array(c)
         self.normal = self.compute_normal()
+        self.plane = Plane(self.normal, self.a)
 
     # computes normal to the trainagle surface. Pay attention to its direction!
     def compute_normal(self):
-        # TODO
-        pass
+        #we did
+        vecAB = self.b - self.a
+        vecAC = self.c - self.a
+        cross_product = np.cross(vecAB, vecAC)
+        return normalize(cross_product)
 
     def intersect(self, ray: Ray):
-        
-        pass
+        #we did
+        if self.plane.intersect(ray) is None:
+            return None
+        t = self.plane.intersect(ray)[0]
+        p = ray.origin + t * ray.direction
+        vecAB = self.b - self.a
+        vecAC = self.c - self.a
+        areaABC = np.linalg.norm(np.cross(vecAB , vecAC)) / 2
+        vecPA = self.a - p
+        vecPB = self.b - p
+        vecPC = self.c - p
+        alpha = (np.linalg.norm(np.cross(vecPB, vecPC))) / (2 * areaABC)
+        beta = (np.linalg.norm(np.cross(vecPA, vecPC))) / (2 * areaABC)
+        gamma = 1 - alpha - beta
+        if alpha > 1 or alpha < 0:
+            return None
+        if beta > 1 or beta < 0:
+            return None
+        if gamma > 1 or gamma < 0:
+            return None
+        if alpha + beta + gamma != 1:
+            return None
+        return t, self
 
 class Pyramid(Object3D):
     """     
@@ -177,7 +202,7 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
     Similar to Traingle, every from face of the diamond's faces are:
         A -> B -> D
         B -> C -> D
-        A -> C -> B
+        A -> C -> D
         E -> B -> A
         E -> C -> B
         C -> E -> A
@@ -192,19 +217,37 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
                 [0,1,3],
                 [1,2,3],
                 [0,3,2],
-                 [4,1,0],
-                 [4,2,1],
-                 [2,4,0]]
-        # TODO
+                [4,1,0],
+                [4,2,1],
+                [2,4,0]]
+        for i in t_idx:
+            l.append(Triangle(self.v_list[i[0]], self.v_list[i[1]], self.v_list[i[2]]))
+        # l.append(Triangle(self.v_list[0], self.v_list[1], self.v_list[3]))
+        # l.append(Triangle(self.v_list[1], self.v_list[2], self.v_list[3]))
+        # l.append(Triangle(self.v_list[0], self.v_list[3], self.v_list[2]))
+        # l.append(Triangle(self.v_list[4], self.v_list[1], self.v_list[0]))
+        # l.append(Triangle(self.v_list[4], self.v_list[2], self.v_list[1]))
+        # l.append(Triangle(self.v_list[2], self.v_list[4], self.v_list[0]))
         return l
 
     def apply_materials_to_triangles(self):
-        # TODO
-        pass
-
+        for triangle in self.triangle_list:
+            triangle.set_material(self.ambient,self.diffuse,self.specular,self.shininess,self.reflection)
+        
     def intersect(self, ray: Ray):
-        # TODO
-        pass
+        min_t = np.inf
+        hit_obj = None
+        for triangle in self.triangle_list:
+            if triangle.intersect(ray) != None:
+                t = triangle.intersect(ray)
+                if t < min_t:
+                    min_t = t
+                    hit_obj = triangle
+        if hit_obj is None:
+            return None
+        return min_t, hit_obj
+
+
 
 class Sphere(Object3D):
     def __init__(self, center, radius: float):
@@ -212,6 +255,27 @@ class Sphere(Object3D):
         self.radius = radius
 
     def intersect(self, ray: Ray):
-        #TODO
-        pass
+        p0 = ray.origin
+        v = ray.direction
+        q = self.center
+        r = self.radius
+        
+        a = np.dot(v, v)
+        b = 2 * np.dot(v, p0 - q)
+        c = np.dot(p0 - q, p0 - q) - r**2
+
+        delta = b**2 - 4 * a * c
+
+        if delta < 0:
+            return None
+
+        sqrt_delta = np.sqrt(delta)
+        t1 = (-b - sqrt_delta) / (2 * a)
+        t2 = (-b + sqrt_delta) / (2 * a)
+
+        if t1 >= 0 and t2 >= 0:
+            return min(t1, t2), self
+        elif max(t1, t2) >= 0:
+            return max(t1, t2), self
+        return None
 
