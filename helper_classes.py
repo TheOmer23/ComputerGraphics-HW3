@@ -106,9 +106,11 @@ class Ray:
                 if t < min_t:
                     min_t = t
                     nearest_object = obj
-        p = self.origin + min_t * self.direction
-        min_distance = np.linalg.norm(p - self.origin)
-        return nearest_object, min_distance
+        if nearest_object is not None:
+            p = self.origin + min_t * self.direction
+            min_distance = np.linalg.norm(p - self.origin)
+            return nearest_object, min_distance, p # We return p for calc_diffuse in hw3.py
+        return nearest_object, min_distance, None
 
 
 class Object3D:
@@ -122,7 +124,7 @@ class Object3D:
 
 class Plane(Object3D):
     def __init__(self, normal, point):
-        self.normal = np.array(normal)
+        self.normal = normalize(np.array(normal))
         self.point = np.array(point)
 
     def intersect(self, ray: Ray):
