@@ -10,7 +10,8 @@ def normalize(vector):
 # This function returns the vector that reflects from the surface
 def reflected(vector, axis):
     v = np.array([0,0,0])
-    v = vector - 2 * (np.dot(vector, axis) * axis)
+    dot = np.dot(vector, axis)
+    v = vector - 2 * dot * axis
     return v
 
 ## Lights
@@ -30,7 +31,7 @@ class DirectionalLight(LightSource):
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self,intersection_point):
         #we did
-        return Ray(intersection_point,normalize(-self.direction))
+        return Ray(intersection_point, normalize(-self.direction))
 
     # This function returns the distance from a point to the light source
     def get_distance_from_light(self, intersection):
@@ -75,7 +76,7 @@ class SpotLight(LightSource):
 
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self, intersection):
-        return Ray(intersection,-self.direction)
+        return Ray(intersection,normalize(-self.direction))
 
     def get_distance_from_light(self, intersection):
         return np.linalg.norm(intersection - self.position)
@@ -101,8 +102,8 @@ class Ray:
         min_t = np.inf
         #we did
         for obj in objects:
-            if obj.intersect(self) != None:
-                t = obj.intersect(self)[0]
+            if obj.intersect(self) is not None:
+                t  = obj.intersect(self)[0]
                 if t < min_t:
                     min_t = t
                     nearest_object = obj
@@ -243,8 +244,8 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
         min_t = np.inf
         hit_obj = None
         for triangle in self.triangle_list:
-            if triangle.intersect(ray) != None:
-                t, trash = triangle.intersect(ray)
+            if triangle.intersect(ray) is not None:
+                t = triangle.intersect(ray)[0]
                 if t < min_t:
                     min_t = t
                     hit_obj = triangle
