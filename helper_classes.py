@@ -225,14 +225,14 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
                 [4,1,0],
                 [4,2,1],
                 [2,4,0]]
-        for i in t_idx:
-            l.append(Triangle(self.v_list[i[0]], self.v_list[i[1]], self.v_list[i[2]]))
-        # l.append(Triangle(self.v_list[0], self.v_list[1], self.v_list[3]))
-        # l.append(Triangle(self.v_list[1], self.v_list[2], self.v_list[3]))
-        # l.append(Triangle(self.v_list[0], self.v_list[3], self.v_list[2]))
-        # l.append(Triangle(self.v_list[4], self.v_list[1], self.v_list[0]))
-        # l.append(Triangle(self.v_list[4], self.v_list[2], self.v_list[1]))
-        # l.append(Triangle(self.v_list[2], self.v_list[4], self.v_list[0]))
+        # for i in t_idx:
+        #     l.append(Triangle(self.v_list[i[0]], self.v_list[i[1]], self.v_list[i[2]]))
+        l.append(Triangle(self.v_list[0], self.v_list[1], self.v_list[3]))
+        l.append(Triangle(self.v_list[1], self.v_list[2], self.v_list[3]))
+        l.append(Triangle(self.v_list[0], self.v_list[3], self.v_list[2]))
+        l.append(Triangle(self.v_list[4], self.v_list[1], self.v_list[0]))
+        l.append(Triangle(self.v_list[4], self.v_list[2], self.v_list[1]))
+        l.append(Triangle(self.v_list[2], self.v_list[4], self.v_list[0]))
         return l
 
     def apply_materials_to_triangles(self):
@@ -244,7 +244,7 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
         hit_obj = None
         for triangle in self.triangle_list:
             if triangle.intersect(ray) != None:
-                t = triangle.intersect(ray)
+                t, trash = triangle.intersect(ray)
                 if t < min_t:
                     min_t = t
                     hit_obj = triangle
