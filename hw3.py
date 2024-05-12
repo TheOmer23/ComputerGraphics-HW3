@@ -93,14 +93,23 @@ def calc_specular(hit_obj, hit_point, ray: Ray, light):
 
 
 def calc_sj(scene, hit_point, light):
-    hit_to_light_ray = light.get_light_ray(hit_point)
+#     hit_to_light_ray = light.get_light_ray(hit_point)
+#     hit_to_light_dist = light.get_distance_from_light(hit_point)
+#     dist = hit_to_light_ray.nearest_intersected_object(scene['objects'])[1]
+#     if dist is None:
+#         return 0
+#     if dist < hit_to_light_dist:
+#         return 0
+#     return 1
+    epsilon = 1e-6  # Small bias to prevent self-shadowing
+    direction_to_light = normalize(light.get_light_ray(hit_point).direction)
+    biased_hit_point = hit_point + epsilon * direction_to_light
+    hit_to_light_ray = Ray(biased_hit_point, direction_to_light)
     hit_to_light_dist = light.get_distance_from_light(hit_point)
-    dist = hit_to_light_ray.nearest_intersected_object(scene['objects'])[1]
-    if dist is None:
-        return 0
-    if dist < hit_to_light_dist:
-        return 0
-    return 1
+    nearest_obj, dist, _ = hit_to_light_ray.nearest_intersected_object(scene['objects'])
+    if nearest_obj is None or dist >= hit_to_light_dist:
+        return 1
+    return 0
 
 
 def construct_reflective_ray(hit_obj, hit_point, ray: Ray):
