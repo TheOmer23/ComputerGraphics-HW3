@@ -76,7 +76,7 @@ class SpotLight(LightSource):
 
     # This function returns the ray that goes from a point to the light source
     def get_light_ray(self, intersection):
-        return Ray(intersection,normalize(-self.direction))
+        return Ray(intersection, normalize(-self.direction))
 
     def get_distance_from_light(self, intersection):
         return np.linalg.norm(intersection - self.position)
@@ -84,9 +84,11 @@ class SpotLight(LightSource):
     def get_intensity(self, intersection):
         dist = self.get_distance_from_light(intersection)
         v = normalize(intersection - self.position)
-        numerator = self.intensity * (np.dot(v , self.direction))
+        dot_product = np.dot(v, self.direction)
+        dot_product_clamped = max(dot_product, 0)
+        numerator = self.intensity * dot_product_clamped
         denominator = self.kc + (self.kl * dist) + (self.kq * (dist**2))
-        return (numerator / denominator)
+        return (numerator / denominator) if denominator != 0 else 0
 
 class Ray:
     def __init__(self, origin, direction):
@@ -129,8 +131,12 @@ class Plane(Object3D):
         self.point = np.array(point)
 
     def intersect(self, ray: Ray):
+        denominator = np.dot(self.normal, ray.direction)
+        if abs(denominator) < 1e-6:  # Small threshold to handle nearly parallel case
+            return None
+    
         v = self.point - ray.origin
-        t = np.dot(v, self.normal) / (np.dot(self.normal, ray.direction) + 1e-6)
+        t = np.dot(v, self.normal) / denominator
         if t > 0:
             return t, self
         else:
@@ -164,28 +170,46 @@ class Triangle(Object3D):
 
     def intersect(self, ray: Ray):
         #we did
-        if self.plane.intersect(ray) is None:
+        ab = self.b - self.a
+        ac = self.c - self.a
+        a = np.column_stack((ab, ac, -ray.direction))
+        b = ray.origin - self.a
+        eps = 1e-6  # Small epsilon value for numerical stability and edge handling
+
+        try:
+            # Solving the system using numpy's linear algebra solver
+            u, v, t = np.linalg.solve(a, b)
+        except np.linalg.LinAlgError:
+            # This occurs if the matrix A is singular, i.e., no solution
             return None
-        t = self.plane.intersect(ray)[0]
-        p = ray.origin + t * ray.direction
-        vecAB = self.b - self.a
-        vecAC = self.c - self.a
-        areaABC = np.linalg.norm(np.cross(vecAB , vecAC)) / 2
-        vecPA = self.a - p
-        vecPB = self.b - p
-        vecPC = self.c - p
-        alpha = (np.linalg.norm(np.cross(vecPB, vecPC))) / (2 * areaABC)
-        beta = (np.linalg.norm(np.cross(vecPA, vecPC))) / (2 * areaABC)
-        gamma = 1 - alpha - beta
-        if alpha > 1 or alpha < 0:
+
+        # Check if the solution is within the bounds of the triangle and ray is pointing towards it
+        if (0 <= u <= 1) and (0 <= v <= 1) and (u + v <= 1) and t >= eps:
+            return t, self
+        else:
             return None
-        if beta > 1 or beta < 0:
-            return None
-        if gamma > 1 or gamma < 0:
-            return None
-        if alpha + beta + gamma != 1:
-            return None
-        return t, self
+        # if self.plane.intersect(ray) is None:
+        #     return None
+        # t = self.plane.intersect(ray)[0]
+        # p = ray.origin + t * ray.direction
+        # vecAB = self.b - self.a
+        # vecAC = self.c - self.a
+        # areaABC = np.linalg.norm(np.cross(vecAB , vecAC)) / 2
+        # vecPA = self.a - p
+        # vecPB = self.b - p
+        # vecPC = self.c - p
+        # alpha = (np.linalg.norm(np.cross(vecPB, vecPC))) / (2 * areaABC)
+        # beta = (np.linalg.norm(np.cross(vecPA, vecPC))) / (2 * areaABC)
+        # gamma = 1 - alpha - beta
+        # if alpha > 1 or alpha < 0:
+        #     return None
+        # if beta > 1 or beta < 0:
+        #     return None
+        # if gamma > 1 or gamma < 0:
+        #     return None
+        # if alpha + beta + gamma != 1:
+        #     return None
+        # return t, self
 
 class Pyramid(Object3D):
     """     

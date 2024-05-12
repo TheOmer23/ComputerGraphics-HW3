@@ -22,10 +22,8 @@ def render_scene(camera, ambient, lights, objects, screen_size, max_depth):
             origin = camera
             direction = normalize(pixel - origin)
             ray = Ray(origin, direction)
-            hit_obj, obj_distance, hit_point = ray.nearest_intersected_object(scene['objects'])
 
-            if hit_obj is not None:
-                color = get_color(scene, ray, 1, max_depth)
+            color = get_color(scene, ray, 1, max_depth)
             # We clip the values between 0 and 1 so all pixel values will make sense.
             image[i, j] = np.clip(color, 0, 1)
 
@@ -98,9 +96,11 @@ def calc_sj(scene, hit_point, light):
     hit_to_light_ray = light.get_light_ray(hit_point)
     hit_to_light_dist = light.get_distance_from_light(hit_point)
     dist = hit_to_light_ray.nearest_intersected_object(scene['objects'])[1]
+    if dist is None:
+        return 0
     if dist < hit_to_light_dist:
-        return 1
-    return 0
+        return 0
+    return 1
 
 
 def construct_reflective_ray(hit_obj, hit_point, ray: Ray):
@@ -112,7 +112,7 @@ def construct_reflective_ray(hit_obj, hit_point, ray: Ray):
         norm = triangle.normal
     else:
         norm = hit_obj.normal
-    r_ray = Ray(hit_point, reflected(-ray.direction, norm))
+    r_ray = Ray(hit_point, reflected(ray.direction, norm))
     return r_ray
 
 
