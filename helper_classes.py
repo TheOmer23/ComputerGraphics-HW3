@@ -3,7 +3,14 @@ import numpy as np
 
 # This function gets a vector and returns its normalized form.
 def normalize(vector):
-    return vector / np.linalg.norm(vector)
+    norm = np.linalg.norm(vector)
+    if norm == 0:
+        # Return a default vector if the input vector is zero
+        # Alternatively, you could return the original vector
+        # return vector
+        return np.array([0, 0, 0])  # or any other default normalized vector
+    return vector / norm
+    #return vector / np.linalg.norm(vector)
 
 
 # This function gets a vector and the normal of the surface it hit
@@ -61,8 +68,13 @@ class PointLight(LightSource):
 
     # This function returns the light intensity at a point
     def get_intensity(self, intersection):
-        d = self.get_distance_from_light(intersection)
-        return self.intensity / (self.kc + self.kl*d + self.kq * (d**2))
+        #d = self.get_distance_from_light(intersection)
+        #return self.intensity / (self.kc + self.kl*d + self.kq * (d**2))
+        distance = np.linalg.norm(intersection - self.position)
+        attenuation = self.kc + self.kl * distance + self.kq * (distance ** 2)
+        # Ensure attenuation is at least very small to avoid division by zero
+        attenuation = max(attenuation, 1e-6)
+        return self.intensity / attenuation
 
 
 class SpotLight(LightSource):
@@ -85,7 +97,7 @@ class SpotLight(LightSource):
         dist = self.get_distance_from_light(intersection)
         v = normalize(intersection - self.position)
         dot_product = np.dot(v, self.direction)
-        dot_product_clamped = max(dot_product, 0)
+        dot_product_clamped = max(dot_product, 0) ** 2
         numerator = self.intensity * dot_product_clamped
         denominator = self.kc + (self.kl * dist) + (self.kq * (dist**2))
         return (numerator / denominator) if denominator != 0 else 0
@@ -185,9 +197,8 @@ class Triangle(Object3D):
 
         # Check if the solution is within the bounds of the triangle and ray is pointing towards it
         if (0 <= u <= 1) and (0 <= v <= 1) and (u + v <= 1) and t >= eps:
-            return t, self
-        else:
-            return None
+            return t, self    
+        return None
         # if self.plane.intersect(ray) is None:
         #     return None
         # t = self.plane.intersect(ray)[0]
