@@ -319,5 +319,3 @@ class Sphere(Object3D):
         elif max(t1, t2) >= 0:
             return max(t1, t2), self
         return None
-
- 
