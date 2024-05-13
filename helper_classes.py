@@ -5,13 +5,8 @@ import numpy as np
 def normalize(vector):
     norm = np.linalg.norm(vector)
     if norm == 0:
-        # Return a default vector if the input vector is zero
-        # Alternatively, you could return the original vector
-        # return vector
-        return np.array([0, 0, 0])  # or any other default normalized vector
+        return np.array([0, 0, 0]) 
     return vector / norm
-    #return vector / np.linalg.norm(vector)
-
 
 # This function gets a vector and the normal of the surface it hit
 # This function returns the vector that reflects from the surface
@@ -68,11 +63,8 @@ class PointLight(LightSource):
 
     # This function returns the light intensity at a point
     def get_intensity(self, intersection):
-        #d = self.get_distance_from_light(intersection)
-        #return self.intensity / (self.kc + self.kl*d + self.kq * (d**2))
         distance = np.linalg.norm(intersection - self.position)
         attenuation = self.kc + self.kl * distance + self.kq * (distance ** 2)
-        # Ensure attenuation is at least very small to avoid division by zero
         attenuation = max(attenuation, 1e-6)
         return self.intensity / attenuation
 
@@ -105,7 +97,7 @@ class SpotLight(LightSource):
 class Ray:
     def __init__(self, origin, direction):
         self.origin = origin
-        self.direction = direction
+        self.direction = normalize(direction) 
 
     # The function is getting the collection of objects in the scene and looks for the one with minimum distance.
     # The function should return the nearest object and its distance (in two different arguments)
@@ -182,21 +174,17 @@ class Triangle(Object3D):
 
     def intersect(self, ray: Ray):
         #we did
-        ab = self.b - self.a
-        ac = self.c - self.a
-        a = np.column_stack((ab, ac, -ray.direction))
+        vecAB = self.b - self.a
+        vecAC = self.c - self.a
+        a = np.column_stack((vecAB, vecAC, -ray.direction))
         b = ray.origin - self.a
-        eps = 1e-6  # Small epsilon value for numerical stability and edge handling
 
         try:
-            # Solving the system using numpy's linear algebra solver
-            u, v, t = np.linalg.solve(a, b)
+            alpha, beta, t = np.linalg.solve(a, b)
         except np.linalg.LinAlgError:
-            # This occurs if the matrix A is singular, i.e., no solution
             return None
 
-        # Check if the solution is within the bounds of the triangle and ray is pointing towards it
-        if (0 <= u <= 1) and (0 <= v <= 1) and (u + v <= 1) and t >= eps:
+        if (0 <= alpha <= 1) and (0 <= beta <= 1) and (alpha + beta <= 1) and t > 1e-6:
             return t, self    
         return None
         # if self.plane.intersect(ray) is None:
@@ -211,16 +199,10 @@ class Triangle(Object3D):
         # vecPC = self.c - p
         # alpha = (np.linalg.norm(np.cross(vecPB, vecPC))) / (2 * areaABC)
         # beta = (np.linalg.norm(np.cross(vecPA, vecPC))) / (2 * areaABC)
-        # gamma = 1 - alpha - beta
-        # if alpha > 1 or alpha < 0:
-        #     return None
-        # if beta > 1 or beta < 0:
-        #     return None
-        # if gamma > 1 or gamma < 0:
-        #     return None
-        # if alpha + beta + gamma != 1:
-        #     return None
-        # return t, self
+        # if (0 <= alpha <= 1) and (0 <= beta <= 1) and (alpha + beta <= 1) and t > 1e-6:
+        #     return t, self    
+        # return None
+
 
 class Pyramid(Object3D):
     """     
@@ -261,8 +243,6 @@ A /&&&&&&&&&&&&&&&&&&&&\ B &&&/ C
                 [4,1,0],
                 [4,2,1],
                 [2,4,0]]
-        # for i in t_idx:
-        #     l.append(Triangle(self.v_list[i[0]], self.v_list[i[1]], self.v_list[i[2]]))
         l.append(Triangle(self.v_list[0], self.v_list[1], self.v_list[3]))
         l.append(Triangle(self.v_list[1], self.v_list[2], self.v_list[3]))
         l.append(Triangle(self.v_list[0], self.v_list[3], self.v_list[2]))
@@ -296,26 +276,17 @@ class Sphere(Object3D):
         self.radius = radius
 
     def intersect(self, ray: Ray):
-        p0 = ray.origin
-        v = ray.direction
-        q = self.center
-        r = self.radius
-        
-        a = np.dot(v, v)
-        b = 2 * np.dot(v, p0 - q)
-        c = np.dot(p0 - q, p0 - q) - r**2
-
-        delta = b**2 - 4 * a * c
-
-        if delta < 0:
+        ray_origin_to_sphere_center = self.center - ray.origin
+        projection_on_ray = np.dot(ray_origin_to_sphere_center, ray.direction)
+        if projection_on_ray < 0:
             return None
-
-        sqrt_delta = np.sqrt(delta)
-        t1 = (-b - sqrt_delta) / (2 * a)
-        t2 = (-b + sqrt_delta) / (2 * a)
-
-        if t1 >= 0 and t2 >= 0:
-            return min(t1, t2), self
-        elif max(t1, t2) >= 0:
-            return max(t1, t2), self
-        return None
+        
+        closest_point_on_ray_to_sphere = ray.origin + projection_on_ray*ray.direction
+        distance_to_closest_point = np.linalg.norm(closest_point_on_ray_to_sphere - self.center)
+        if distance_to_closest_point > self.radius:
+            return None
+        
+        t = projection_on_ray - np.sqrt(self.radius**2 - distance_to_closest_point**2)
+        return t, self
+    
+        

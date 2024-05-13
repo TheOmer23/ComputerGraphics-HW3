@@ -93,15 +93,7 @@ def calc_specular(hit_obj, hit_point, ray: Ray, light):
 
 
 def calc_sj(scene, hit_point, light):
-#     hit_to_light_ray = light.get_light_ray(hit_point)
-#     hit_to_light_dist = light.get_distance_from_light(hit_point)
-#     dist = hit_to_light_ray.nearest_intersected_object(scene['objects'])[1]
-#     if dist is None:
-#         return 0
-#     if dist < hit_to_light_dist:
-#         return 0
-#     return 1
-    epsilon = 1e-6  # Small bias to prevent self-shadowing
+    epsilon = 1e-6
     direction_to_light = normalize(light.get_light_ray(hit_point).direction)
     biased_hit_point = hit_point + epsilon * direction_to_light
     hit_to_light_ray = Ray(biased_hit_point, direction_to_light)
@@ -125,10 +117,57 @@ def construct_reflective_ray(hit_obj, hit_point, ray: Ray):
     return r_ray
 
 
-# # Write your own objects and lights
-# # TODO
-# def your_own_scene():
-#     camera = np.array([0, 0, 1])
-#     lights = []
-#     objects = []
-#     return camera, lights, objects
+# Write your own objects and lights
+# TODO
+def your_own_scene():
+    camera = np.array([0, 0, 1])
+
+    # Light sources
+    lights = [
+        DirectionalLight(intensity=0.8, direction=np.array([1, -1, -2])),
+        PointLight(intensity=0.6, position=np.array([2, 10, -5]), kc=1, kl=0.1, kq=0.01)
+    ]
+
+    # Objects in the scene
+    objects = [
+        Plane(normal=np.array([0, 1, 0]), point=np.array([0, -1, 0])),  # Horizontal plane at y = -1
+        Sphere(center=np.array([0, 0, -3]), radius=1),  # Sphere on the left
+        Sphere(center=np.array([2, 0, -3]), radius=0.5),
+        Sphere(center=np.array([0, 2, -3]), radius=0.25) # Smaller sphere on the right
+    ]
+
+    # Setting materials for the objects
+    objects[1].set_material(
+        ambient=np.array([1, 0, 0]),  # Red
+        diffuse=np.array([1, 0.5, 0.5]),
+        specular=np.array([1, 1, 1]),
+        shininess=50,
+        reflection=0.5
+    )
+    
+    objects[2].set_material(
+        ambient=np.array([0, 0, 1]),  # Blue
+        diffuse=np.array([0.5, 0.5, 1]),
+        specular=np.array([1, 1, 1]),
+        shininess=30,
+        reflection=0.3
+    )
+
+    objects[3].set_material(
+        ambient=np.array([0.64, 1, 0.12]),  # Blue
+        diffuse=np.array([0.5, 0.8, 1]),
+        specular=np.array([1, 1, 1]),
+        shininess=30,
+        reflection=1
+    )
+
+    objects[0].set_material(
+        ambient=np.array([0.2, 0.2, 0.2]),  # Dark grey plane
+        diffuse=np.array([0.6, 0.6, 0.6]),
+        specular=np.array([0.5, 0.5, 0.5]),
+        shininess=10,
+        reflection=0.8
+    )
+
+    return camera, lights, objects
+
