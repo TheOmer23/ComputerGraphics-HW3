@@ -131,9 +131,9 @@ def your_own_scene():
     # Objects in the scene
     objects = [
         Plane(normal=np.array([0, 1, 0]), point=np.array([0, -1, 0])),  # Horizontal plane at y = -1
-        Sphere(center=np.array([0, 0, -3]), radius=1),  # Sphere on the left
-        Sphere(center=np.array([2, 0, -3]), radius=0.5),
-        Sphere(center=np.array([0, 2, -3]), radius=0.25) # Smaller sphere on the right
+        Sphere(center=np.array([-2, 1, -3]), radius=1),  # Sphere on the left
+        Sphere(center=np.array([2, 0, -3]), radius=0.5),  # Sphere on the right
+        Sphere(center=np.array([0, 2, -3]), radius=0.25)  # Smaller sphere above
     ]
 
     # Setting materials for the objects
@@ -154,7 +154,7 @@ def your_own_scene():
     )
 
     objects[3].set_material(
-        ambient=np.array([0.64, 1, 0.12]),  # Blue
+        ambient=np.array([0.64, 1, 0.12]),  # Green
         diffuse=np.array([0.5, 0.8, 1]),
         specular=np.array([1, 1, 1]),
         shininess=30,
@@ -168,6 +168,21 @@ def your_own_scene():
         shininess=10,
         reflection=0.8
     )
+
+    # Adjusted vertices for the pyramid to be closer to the camera and visible
+    v_list = np.array(
+    [
+        [-0.5, -0.142, -0.998],
+        [-0.034, 0.092, -0.145],
+        [0.484, 0.031, -0.998],
+        [-0.104, 0.851, -0.828],
+        [0.23, -0.833, -0.591]
+    ])
+
+    pyramid = Pyramid(v_list)
+    pyramid.set_material([0.5, -0.4, 0.1], [0.1, 0.1, -0.7], [0.3, 0.8, 0.3], 5, 0.5)
+    pyramid.apply_materials_to_triangles()
+    objects.append(pyramid)
 
     return camera, lights, objects
 

@@ -173,7 +173,7 @@ class Triangle(Object3D):
         return normalize(cross_product)
 
     def intersect(self, ray: Ray):
-        #we did
+        # # #we did
         vecAB = self.b - self.a
         vecAC = self.c - self.a
         a = np.column_stack((vecAB, vecAC, -ray.direction))
